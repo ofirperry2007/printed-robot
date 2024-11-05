@@ -17,6 +17,7 @@ notes:
 #include "clicli.h"
 
 
+
 ev3lego mymotor(3, //encoder1(blue). must be either pin 2 or 3
                 4, //encoder2(yellow)
                 6, //in1 (L298N)direction
@@ -27,6 +28,7 @@ clicli mycli(mymotor);
 
 void setup() {
   mymotor.begin();
+  mycli.begin();
 }
 
 void loop() {
