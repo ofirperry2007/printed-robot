@@ -16,6 +16,8 @@
 */
 #include "ev3lego.h"
 #include "Arduino.h"
+#include <LiquidCrystal_I2C.h>
+LiquidCrystal_I2C lcd(0x27,16,2);
 
 volatile long degrees;
 static int encoderPin1;  // Static variables to hold encoder pin values
@@ -59,7 +61,16 @@ void ev3lego::begin() {
   
   attachInterrupt(digitalPinToInterrupt(_encoder1), countDegrees, CHANGE);
   previousTime = millis();
+  lcd.init();  
+  lcd.backlight();
+  lcd.setCursor(0,0);
+  lcd.print("printed robot");
+  lcd.setCursor(1, 1);
+  lcd.print("Setup finished");
+  //lcd.setBacklight(0);
+  Serial.println("Setup finished");
 }
+
 
 void ev3lego::run() {
   static long deg = 0;
