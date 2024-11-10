@@ -131,8 +131,10 @@ void clicli::run() {
        Serial.print(command[1]);
        break;
        
-       case 'q':
+      case 'q':
        mylego.godegrees(command[1],command[2]);
+       mylego.motgo(0);
+       
        break;
 
        message_pos = 0;     //Reset for the next message
