@@ -53,23 +53,23 @@ void clicli::run() {
       int argindex = 0;
       char cmd;
       char delim[] = " ";
-	     char tmpmsg[MAX_MESSAGE_LENGTH];
+       char tmpmsg[MAX_MESSAGE_LENGTH];
        strcpy(tmpmsg,message);
        message_pos = 0;
        message[message_pos] = '\0';     //Add null character to string
 
         char *ptr = strtok(tmpmsg, delim);
-	      while(ptr != NULL)
-	       {
-		      //Serial.printf("'%s'\n", ptr);
+        while(ptr != NULL)
+         {
+          //Serial.printf("'%s'\n", ptr);
           if (argindex == 0) {
             cmd = ptr[0];
           }
           command[argindex] = atoi(ptr);   
           //Serial.println(command[argindex]);
           argindex++;  
-		      ptr = strtok(NULL, delim);
-	       } 
+          ptr = strtok(NULL, delim);
+         } 
 
       switch (cmd) {
        case 'h': //Set port to HIGH
@@ -129,12 +129,13 @@ void clicli::run() {
       case 'p':
        mylego.godegreesp(command[1],command[2],command[3],command[4],0);
        Serial.print(command[1]);
+       mylego.motgo(0);
        break;
        
       case 'q':
        mylego.godegrees(command[1],command[2]);
+       Serial.print(command[1]);
        mylego.motgo(0);
-       
        break;
 
        message_pos = 0;     //Reset for the next message
