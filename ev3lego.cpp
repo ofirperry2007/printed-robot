@@ -18,13 +18,19 @@
 #include "Arduino.h"
 #include <LiquidCrystal_I2C.h>
 LiquidCrystal_I2C lcd(0x27,16,2);
+#include "HardwareSerial.h"
+#include "Wire.h"
+#include <MPU6050_light.h>
+
+MPU6050 mpu(Wire);
 
 volatile long degrees;
-static int encoderPin1;  // Static variables to hold encoder pin values
-static int encoderPin2;
+int encoderPin1;  // Static variables to hold encoder pin values
+int encoderPin2;
 unsigned long previousTime;
 double lastError;
 double cumError, rateError;
+unsigned long timer = 0; 
 
 ev3lego::ev3lego(int encoder1, int encoder2, int in1, int in2, int ena, int wheel) {
   _encoder1 = encoder1;
@@ -41,7 +47,7 @@ void countDegrees() {
   } else {
     degrees--;
   }
-  Serial.println(degrees);
+  // Serial.println(degrees);
 }
 
 void ev3lego::begin() {
@@ -61,21 +67,46 @@ void ev3lego::begin() {
   
   attachInterrupt(digitalPinToInterrupt(_encoder1), countDegrees, CHANGE);
   previousTime = millis();
+  Wire.begin();
+  byte status = mpu.begin();
+  Serial.print(F("MPU6050 status: "));
+  Serial.println(status);
+  if (status != 0) {
+    Serial.println("MPU6050 connection failed!");
+    return;
+  }
+  
+  Serial.println(F("Calculating offsets, do not move MPU6050"));
+  delay(1000);
+  mpu.calcOffsets(); 
+  Serial.println("Done!"); 
+/*
   lcd.init();  
   lcd.backlight();
   lcd.setCursor(0,0);
   lcd.print("printed robot");
   lcd.setCursor(1, 1);
   lcd.print("Setup finished");
-  //lcd.setBacklight(0);
+  lcd.setBacklight(0);
+*/
   Serial.println("Setup finished");
 }
-
 
 void ev3lego::run() {
   static long deg = 0;
   if(deg != degrees){
     deg = degrees;
+  }{
+  mpu.update();
+  
+  if((millis()-timer)>10){ // print data every 10ms
+  Serial.print("X : ");
+  Serial.print(mpu.getAngleX());
+  Serial.print("\tY : ");
+  Serial.print(mpu.getAngleY());
+  Serial.print("\tZ : ");
+  Serial.println(mpu.getAngleZ());
+  timer = millis();  
   }
 }
 
