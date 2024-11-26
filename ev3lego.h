@@ -20,4 +20,4 @@
    double _kp, _ki, _kd;
    bool integralflag = false;
  };
-#endif 
+#endif
