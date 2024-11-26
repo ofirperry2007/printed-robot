@@ -21,6 +21,10 @@ ___________________________________________________
 #include "clicli.h"
 #include "Arduino.h"
 #include "HardwareSerial.h"
+#include "Wire.h"
+#include <MPU6050_light.h>
+
+MPU6050 mpu(Wire);
 
 const unsigned int MAX_MESSAGE_LENGTH = 64;
 
