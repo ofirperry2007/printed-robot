@@ -1,23 +1,7 @@
-/*
-
-          LEGO EV3 and NXT motor hacked
-
-    A Simple Interface for managing the encoder
-      utilizing arduino's interrupts 
-      working with L298N motor driver.
-
-       lego cable pinout:
-        green   - 5v
-        red     - GND
-        blue    - encoderin1
-        yellow  - encoderin2
-        black/white - motor terminals  - connect to a motor driver!        
-             
-*/
 #include "ev3lego.h"
 #include "Arduino.h"
 #include <LiquidCrystal_I2C.h>
-LiquidCrystal_I2C lcd(0x27,16,2);
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 #include "HardwareSerial.h"
 #include "Wire.h"
 #include <MPU6050_light.h>
@@ -30,7 +14,8 @@ int encoderPin2;
 unsigned long previousTime;
 double lastError;
 double cumError, rateError;
-unsigned long timer = 0; 
+unsigned long timer = 0;
+bool integralflag = false;  // הגדרת המשתנה integralflag
 
 ev3lego::ev3lego(int encoder1, int encoder2, int in1, int in2, int ena, int wheel) {
   _encoder1 = encoder1;
@@ -42,7 +27,7 @@ ev3lego::ev3lego(int encoder1, int encoder2, int in1, int in2, int ena, int whee
 }
 
 void countDegrees() {
-  if(digitalRead(encoderPin1) == digitalRead(encoderPin2)) {
+  if (digitalRead(encoderPin1) == digitalRead(encoderPin2)) {
     degrees++;
   } else {
     degrees--;
@@ -58,7 +43,8 @@ void ev3lego::begin() {
   pinMode(_encoder2, INPUT);
   pinMode(_in1, OUTPUT);
   pinMode(_in2, OUTPUT);
-  pinMode(_ena, OUTPUT);  
+  pinMode(_ena, OUTPUT);
+  
   // Assign the static variables to the instance values
   encoderPin1 = _encoder1;
   encoderPin2 = _encoder2;
@@ -80,7 +66,8 @@ void ev3lego::begin() {
   delay(1000);
   mpu.calcOffsets(); 
   Serial.println("Done!"); 
-/*
+  
+  /*
   lcd.init();  
   lcd.backlight();
   lcd.setCursor(0,0);
@@ -88,25 +75,26 @@ void ev3lego::begin() {
   lcd.setCursor(1, 1);
   lcd.print("Setup finished");
   lcd.setBacklight(0);
-*/
+  */
+  
   Serial.println("Setup finished");
 }
 
 void ev3lego::run() {
   static long deg = 0;
-  if(deg != degrees){
+  if (deg != degrees) {
     deg = degrees;
-  }{
+  }
   mpu.update();
   
-  if((millis()-timer)>10){ // print data every 10ms
-  Serial.print("X : ");
-  Serial.print(mpu.getAngleX());
-  Serial.print("\tY : ");
-  Serial.print(mpu.getAngleY());
-  Serial.print("\tZ : ");
-  Serial.println(mpu.getAngleZ());
-  timer = millis();  
+  if ((millis() - timer) > 10) { // print data every 10ms
+    Serial.print("X : ");
+    Serial.print(mpu.getAngleX());
+    Serial.print("\tY : ");
+    Serial.print(mpu.getAngleY());
+    Serial.print("\tZ : ");
+    Serial.println(mpu.getAngleZ());
+    timer = millis();
   }
 }
 
@@ -114,17 +102,11 @@ long ev3lego::ang() {
   return degrees;
 }
 
-double ev3lego::PIDcalc(double inp, int sp, int kp, int ki, int kd){
+double ev3lego::PIDcalc(double inp, int sp, int kp, int ki, int kd) {
   unsigned long currentTime = millis();  // Get current time
   double elapsedTime = (currentTime - previousTime) / 1000.0;  // Compute elapsed time in seconds
 
-  // Ensure elapsed time is computed as a floating-point number
-  //Serial.print("Elapsed time = ");
-  //Serial.println(elapsedTime, 6);  // Debugging to print elapsed time
-  //Serial.print("I = ");
-  //Serial.println(cumError);
   double error = inp - sp;  // Determine error
-  // Detect if the error has changed direction
   if (error * lastError < 0) {  // If error changes sign (direction), reset integral
     integralflag = true;  // Set flag to indicate error has changed direction
     cumError = 0;         // Reset cumulative error when direction changes
@@ -149,20 +131,21 @@ double ev3lego::PIDcalc(double inp, int sp, int kp, int ki, int kd){
     // Limit the output for smoother operation
     if (out > 254) { out = 254; }
     if (out < -254) { out = -254; }
-    Serial.print("degrees = ");  Serial.println(degrees);
-    Serial.print("out value = ");  Serial.println(out);
+    Serial.print("degrees = ");  
+    Serial.println(degrees);
+    Serial.print("out value = ");  
+    Serial.println(out);
     return out;  // Return the PID output value
   }
 
   return 0;  // Return 0 if elapsedTime is zero
 }
 
-
-void ev3lego::motgo(int speed){
-  if(speed > 0){
+void ev3lego::motgo(int speed) {
+  if (speed > 0) {
     digitalWrite(_in1, LOW);
     digitalWrite(_in2, HIGH);
-  } else if (speed < 0){
+  } else if (speed < 0) {
     digitalWrite(_in1, HIGH);
     digitalWrite(_in2, LOW);
   } else {
@@ -172,34 +155,34 @@ void ev3lego::motgo(int speed){
   analogWrite(_ena, abs(speed));
 }
 
-void ev3lego::godegrees(int angle, int times){ //output: -254<x<+254
-  for(int i = 0; i < times; i++){ 
-    int motspeed = PIDcalc(angle, degrees, 1, 1, 0);//sp, pv. pv is the global variable degrees
-    if(motspeed > 254){motspeed = 254;}
-    if(motspeed < -254){motspeed = -254;}
+void ev3lego::godegrees(int angle, int times) {  //output: -254<x<+254
+  for (int i = 0; i < times; i++) {
+    int motspeed = PIDcalc(angle, degrees, 1, 1, 0);  //sp, pv. pv is the global variable degrees
+    if (motspeed > 254) { motspeed = 254; }
+    if (motspeed < -254) { motspeed = -254; }
     motgo(motspeed);
   }
 }
 
-void ev3lego::godegreesp(int angle, int times, int kp, int ki, int kd){
-  for(int i = 0; i < times; i++){ 
-      int motspeed = PIDcalc(angle, degrees, kp, ki, kd);//sp, pv. pv is the global variable degrees
-      if(motspeed > 254){motspeed = 254;}
-      if(motspeed < -254){motspeed = -254;}
-      motgo(motspeed);
-    }
+void ev3lego::godegreesp(int angle, int times, int kp, int ki, int kd) {
+  for (int i = 0; i < times; i++) {
+    int motspeed = PIDcalc(angle, degrees, kp, ki, kd);  //sp, pv. pv is the global variable degrees
+    if (motspeed > 254) { motspeed = 254; }
+    if (motspeed < -254) { motspeed = -254; }
+    motgo(motspeed);
+  }
 }
 
-double ev3lego::gomm(int distance, int times){
+double ev3lego::gomm(int distance, int times) {
   int deg = (distance / (_wheel * PI)) * 360;
   godegrees(deg, times);
-  int distcovered = (degrees * PI);
-  return distcovered; 
+  double distcovered = (degrees / 360.0) * (_wheel * PI);  // חישוב נכון של המרחק
+  return distcovered;
 }
 
-double ev3lego::gommp(int distance, int times, int kp, int ki, int kd){
+double ev3lego::gommp(int distance, int times, int kp, int ki, int kd) {
   int deg = (distance / (_wheel * PI)) * 360;
   godegreesp(deg, times, kp, ki, kd);
-  int distcovered = (degrees * PI);
+  double distcovered = (degrees / 360.0) * (_wheel * PI);  // חישוב נכון של המרחק
   return distcovered;
 }
