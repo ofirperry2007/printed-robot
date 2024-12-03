@@ -18,9 +18,6 @@
 #include "Arduino.h"
 #include <LiquidCrystal_I2C.h>
 LiquidCrystal_I2C lcd(0x27,16,2);
-#include "HardwareSerial.h"
-#include "Wire.h"
-#include <MPU6050_light.h>
 
 volatile long degrees;
 static int encoderPin1;  // Static variables to hold encoder pin values
