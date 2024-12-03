@@ -54,7 +54,7 @@ void countDegrees() {
 void ev3lego::begin() {
   Serial.begin(115200);
   Serial.println("\nenjoy using lego motor!");
-  
+
   pinMode(_encoder1, INPUT);
   pinMode(_encoder2, INPUT);
   pinMode(_in1, OUTPUT);
@@ -65,7 +65,7 @@ void ev3lego::begin() {
   encoderPin2 = _encoder2;
   
   degrees = 0;
-  
+
   attachInterrupt(digitalPinToInterrupt(_encoder1), countDegrees, CHANGE);
   previousTime = millis();
    Wire.begin();
@@ -90,7 +90,7 @@ void ev3lego::begin() {
   lcd.setBacklight(0);
   */
 
-    Serial.println("Setup finished"); 
+ Serial.println("Setup finished");
 } 
 
 void ev3lego::run() {
