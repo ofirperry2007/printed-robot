@@ -21,10 +21,6 @@ ___________________________________________________
 #include "clicli.h"
 #include "Arduino.h"
 #include "HardwareSerial.h"
-#include "Wire.h"
-#include <MPU6050_light.h>
-
-MPU6050 mpu(Wire);
 
 const unsigned int MAX_MESSAGE_LENGTH = 64;
 
@@ -133,13 +129,10 @@ void clicli::run() {
       case 'p':
        mylego.godegreesp(command[1],command[2],command[3],command[4],0);
        Serial.print(command[1]);
-       mylego.motgo(0);
        break;
        
-      case 'q':
+       case 'q':
        mylego.godegrees(command[1],command[2]);
-       Serial.print(command[1]);
-       mylego.motgo(0);
        break;
 
        message_pos = 0;     //Reset for the next message
