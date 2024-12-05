@@ -13,6 +13,8 @@
    void motgo(int speed);
    double gomm(int distance, int times);
    double gommp(int distance, int times, int kp, int ki, int kd);
+   int getYAW(); 
+
 
 
   private:
