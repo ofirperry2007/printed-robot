@@ -99,15 +99,6 @@ void ev3lego::run() {
     deg = degrees;
   }
       mpu.update();
-      if ((millis() - timer) > 10) { // print data every 10ms
-    Serial.print("X : ");
-    Serial.print(mpu.getAngleX());
-    Serial.print("\tY : ");
-    Serial.print(mpu.getAngleY());
-    Serial.print("\tZ : ");
-    Serial.println(mpu.getAngleZ());
-    timer = millis();
-  }
 }
 
 long ev3lego::ang() {
@@ -203,3 +194,7 @@ double ev3lego::gommp(int distance, int times, int kp, int ki, int kd){
   int distcovered = (degrees * PI);
   return distcovered;
 }
+
+  int ev3lego::getYAW(){
+  return int(mpu.getAngleZ());
+} 
