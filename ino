@@ -33,7 +33,8 @@ void setup() {
 }
 
 void loop() {
-  mymotor.run();//must have it in the background to update motor position
+  mymotor.run();//must have it in the background to update motor position 
+  Serial.println(mymotor.getYAW());
   mycli.run();
   //mymotor.godegreesp(1440, 2000, 1, 1, 0);
   //Serial.println(mymotor.gommp(PI*65, 2000, 1, 1, 0));
