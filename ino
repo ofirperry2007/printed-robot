@@ -21,8 +21,8 @@ notes:
 
 ev3lego mymotor(3, //encoder1(blue). must be either pin 2 or 3
                 4, //encoder2(yellow)
-                6, //in1 (L298N)direction
-                7, //in2 direction
+                5, //in1 (L298N)direction
+                6, //in2 direction
                 10, //enA speed
                 65); //wheel size
 clicli mycli(mymotor);
@@ -34,7 +34,7 @@ void setup() {
 
 void loop() {
   mymotor.run();//must have it in the background to update motor position 
-  Serial.println(mymotor.getYAW());
+  //Serial.println(mymotor.getYAW());
   mycli.run();
   //mymotor.godegreesp(1440, 2000, 1, 1, 0);
   //Serial.println(mymotor.gommp(PI*65, 2000, 1, 1, 0));
