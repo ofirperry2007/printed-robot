@@ -75,7 +75,7 @@ void ev3lego::begin() {
   if (status != 0) {
     Serial.println("MPU6050 connection failed!");
     return;
-}
+  }
   Serial.println(F("Calculating offsets, do not move MPU6050"));
   delay(1000);
   mpu.calcOffsets(); 
@@ -150,14 +150,14 @@ double ev3lego::PIDcalc(double inp, int sp, int kp, int ki, int kd){
 
 void ev3lego::motgo(int speed){
   if(speed > 0){
-    digitalWrite(_in1, LOW);
-    analogWrite(_in2, abs(speed));
-  } else if (speed < 0){
-    digitalWrite(_in1, abs(speed));
-    digitalWrite(_in2, LOW);
-  } else {
-    digitalWrite(_in1, HIGH);
     digitalWrite(_in2, HIGH);
+    analogWrite(_in1, 255);
+  } else if (speed < 0){
+    digitalWrite(_in2, LOW);
+    analogWrite(_in1, 255);
+  } else {
+    digitalWrite(_in1, LOW);
+    digitalWrite(_in2, LOW);
   }
 }
 
@@ -191,7 +191,7 @@ double ev3lego::gommp(int distance, int times, int kp, int ki, int kd){
   godegreesp(deg, times, kp, ki, kd);
   int distcovered = (degrees * PI);
   return distcovered;
-}
+  }
 
   int ev3lego::getYAW(){
   return int(mpu.getAngleZ());
