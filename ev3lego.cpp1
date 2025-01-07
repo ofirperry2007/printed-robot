@@ -148,19 +148,17 @@ double ev3lego::PIDcalc(double inp, int sp, int kp, int ki, int kd){
   return 0;  // Return 0 if elapsedTime is zero
 }
 
-
 void ev3lego::motgo(int speed){
   if(speed > 0){
     digitalWrite(_in1, LOW);
-    digitalWrite(_in2, HIGH);
+    analogWrite(_in2, abs(speed));
   } else if (speed < 0){
-    digitalWrite(_in1, HIGH);
+    digitalWrite(_in1, abs(speed));
     digitalWrite(_in2, LOW);
   } else {
     digitalWrite(_in1, HIGH);
     digitalWrite(_in2, HIGH);
   }
-  analogWrite(_ena, abs(speed));
 }
 
 void ev3lego::godegrees(int angle, int times){ //output: -254<x<+254
