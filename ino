@@ -21,8 +21,8 @@ notes:
 
 ev3lego mymotor(3, //encoder1(blue). must be either pin 2 or 3
                 4, //encoder2(yellow)
-                5, //in1 (L298N)direction
-                6, //in2 direction
+                6, //in1 (L298N)direction
+                7, //in2 direction
                 10, //enA speed
                 65); //wheel size
 clicli mycli(mymotor);
