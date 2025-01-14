@@ -151,10 +151,10 @@ double ev3lego::PIDcalc(double inp, int sp, int kp, int ki, int kd){
 void ev3lego::motgo(int speed){
   if(speed > 0){
     digitalWrite(_in2, HIGH);
-    analogWrite(_in1, 255);
+    analogWrite(_in1, speed);
   } else if (speed < 0){
     digitalWrite(_in2, LOW);
-    analogWrite(_in1, 255);
+    analogWrite(_in1, abs(speed) );
   } else {
     digitalWrite(_in1, LOW);
     digitalWrite(_in2, LOW);
@@ -196,3 +196,9 @@ double ev3lego::gommp(int distance, int times, int kp, int ki, int kd){
   int ev3lego::getYAW(){
   return int(mpu.getAngleZ());
 } 
+
+  int ev3lego::gotoang(int sp){
+    int pv = getYaw
+    error = None
+
+  }
