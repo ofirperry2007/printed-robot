@@ -27,18 +27,19 @@ MPU6050 mpu(Wire);
 volatile long degrees;
 int encoderPin1;  // Static variables to hold encoder pin values
 int encoderPin2;
+int pv, error;
 unsigned long previousTime;
 double lastError;
 double cumError, rateError;
 unsigned long timer = 0;
 bool integralflag = false;  // הגדרת המשתנה integralflag
 
-ev3lego::ev3lego(int encoder1, int encoder2, int in1, int in2, int ena, int wheel) {
+ev3lego::ev3lego(int encoder1, int encoder2, int in1R, int in2R, int enaR, int wheel) {
   _encoder1 = encoder1;
   _encoder2 = encoder2;
-  _in1 = in1;
-  _in2 = in2;
-  _ena = ena;
+  _in1R = in1R;
+  _in2R = in2R;
+  _enaR = enaR;
   _wheel = wheel;
 }
 
@@ -193,12 +194,20 @@ double ev3lego::gommp(int distance, int times, int kp, int ki, int kd){
   return distcovered;
   }
 
-  int ev3lego::getYAW(){
+int ev3lego::getYAW(){
   return int(mpu.getAngleZ());
 } 
 
-  int ev3lego::gotoang(int sp){
-    int pv = getYaw
-    error = None
+int ev3lego::robotgo(int speedR, int speedL){
+ 
+}
 
-  }
+int ev3lego::gotoang(int sp){
+  for (int counter = 0; counter < 1000; ++counter) {
+   int pv = getYAW();
+   error = (sp - pv);
+
+
+
+   }
+}
