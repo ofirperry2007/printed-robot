@@ -1,4 +1,3 @@
-
 /***************************************
  cv++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++cv +     Lego cable pinout:
         green   - 5v
@@ -18,22 +17,25 @@ notes:
 #include "clicli.h"
 
 
-
-ev3lego mymotor(3, //encoder1(blue). must be either pin 2 or 3
-                4, //encoder2(yellow)
-                6, //in1 (L298N)direction
-                7, //in2 direction
-                10, //enA speed
+ev3lego roboPaint(2, //encoder1(blue). must be either pin 2 or 3
+                3, //encoder2(yellow)
+                6, //in1R (L298N)direction
+                7, //in2R direction
+                10, //enAR speed
+                8, //in1L
+                9, //in2L
+                12, //enBL
                 65); //wheel size
-clicli mycli(mymotor);
+clicli mycli(roboPaint);
 
 void setup() {
-  mymotor.begin();
+  roboPaint.begin();
   mycli.begin();
+  roboPaint.motgo(100, 'R');
 }
 
 void loop() {
-  mymotor.run();//must have it in the background to update motor position 
+  roboPaint.run();//must have it in the background to update motor position 
   //Serial.println(mymotor.getYAW());
   mycli.run();
   //mymotor.godegreesp(1440, 2000, 1, 1, 0);
