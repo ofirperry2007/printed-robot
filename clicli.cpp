@@ -113,15 +113,15 @@ void clicli::run() {
         delay(1000);
         break;
 
-      case 'g'://print debug info
+      /*case 'g'://print debug info
         mylego.godegreesp(command[1], 2000, command[2],command[3], command[4]);
-        mylego.motgo(0);
-        break;
+        mylego.motgo(0, command[2]);
+        break;*/
 
       case 'v':
-        mylego.motgo(command[1]);
+        mylego.motgo(command[1], command[2]);
         break;
-      
+      /*
       case 'z':
         mylego.gomm(command[1], 1000);
         break;
@@ -135,7 +135,7 @@ void clicli::run() {
        mylego.godegrees(command[1],command[2]);
        break;
 
-       message_pos = 0;     //Reset for the next message
+       message_pos = 0;     //Reset for the next message*/
       }
    }
    delay (60); 
