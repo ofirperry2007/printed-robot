@@ -34,15 +34,15 @@ double cumError, rateError;
 unsigned long timer = 0;
 bool integralflag = false;  // הגדרת המשתנה integralflag
 
-ev3lego::ev3lego(int encoder1, int encoder2, int in1R, int in2R, int enaR, int wheel, int in1L, int in2L, int enaL) {
+ev3lego::ev3lego(int encoder1, int encoder2, int in10, int in20, int ena0, int wheel, int in11, int in21, int ena1) {
   _encoder1 = encoder1;
   _encoder2 = encoder2;
-  _in1R = in1R;
-  _in2R = in2R;
-  _enaR = enaR;
-  _in1L = in1L;
-  _in2L = in2L;
-  _enaL = enaL;
+  _in10 = in10; // R = 0 , L = 1 , W = 2
+  _in20 = in20; // duration
+  _ena0 = ena0; // speed
+  _in11 = in11;
+  _in21 = in21;
+  _ena1 = ena1;
   _wheel = wheel;
 }
 
@@ -52,7 +52,7 @@ void countDegrees() {
   } else {
     degrees--;
   }
-  Serial.println(degrees);
+  //Serial.println(degrees);
 }
 
 void ev3lego::begin() {
@@ -61,9 +61,13 @@ void ev3lego::begin() {
 
   pinMode(_encoder1, INPUT);
   pinMode(_encoder2, INPUT);
-  pinMode(_in1R, OUTPUT);
-  pinMode(_in2R, OUTPUT);
-  pinMode(_enaR, OUTPUT);  
+  pinMode(_in10, OUTPUT);
+  pinMode(_in20, OUTPUT);
+  pinMode(_ena0, OUTPUT);  
+  pinMode(_ena1, OUTPUT); 
+  pinMode(_in11, OUTPUT);
+  pinMode(_in21, OUTPUT); 
+
   // Assign the static variables to the instance values
   encoderPin1 = _encoder1;
   encoderPin2 = _encoder2;
@@ -119,7 +123,7 @@ double ev3lego::PIDcalc(double inp, int sp, int kp, int ki, int kd){
   //Serial.print("I = ");
   //Serial.println(cumError);
   double error = inp - sp;  // Determine error
-  // Detect if the error has changed direction
+  // Detect if the error has changed directionprintl
   if (error * lastError < 0) {  // If error changes sign (direction), reset integral
     integralflag = true;  // Set flag to indicate error has changed direction
     cumError = 0;         // Reset cumulative error when direction changes
@@ -152,21 +156,47 @@ double ev3lego::PIDcalc(double inp, int sp, int kp, int ki, int kd){
   return 0;  // Return 0 if elapsedTime is zero
 }
 
-void ev3lego::motgo(int speed, char motnum){
-  if ('motnum' == 'R'){
-    Serial.print("R");
+void ev3lego::motgo(int speed, int motnum) {
+  Serial.print("speed =");
+  Serial.println(speed);
+
+  Serial.print("motnum =");
+  Serial.println(motnum);
+
+  if (motnum == '0') {
+    Serial.println("Zero");
+  } 
+  else if (motnum == '1') {  
+    Serial.println("One");
+  } 
+  else { 
+    Serial.print("Invalid motor selection");
   }
-  /*if(speed > 0){
-    digitalWrite(_in2, HIGH);
-    analogWrite(_in1, speed);
-  } else if (speed < 0){
-    digitalWrite(_in2, LOW);
-    analogWrite(_in1, abs(speed) );
-  } else {
-    digitalWrite(_in1, LOW);
-    digitalWrite(_in2, LOW);
-   }*/
+
+  if(speed > 0){
+    digitalWrite(_in20, HIGH);
+    analogWrite(_in10, speed); }
+  else if (speed < 0){
+    digitalWrite(_in20, LOW);
+    analogWrite(_in10, abs(speed) ); }
+  else {
+    digitalWrite(_in10, LOW);
+    digitalWrite(_in20, LOW);
+   }
+
+  if(speed > 0){
+    digitalWrite(_in21, HIGH);
+    analogWrite(_in11, speed); }
+  else if (speed < 0){
+    digitalWrite(_in21, LOW);
+    analogWrite(_in11, abs(speed) ); }
+  else {
+    digitalWrite(_in11, LOW);
+    digitalWrite(_in21, LOW);
+   }
+
 }
+
 /*
 void ev3lego::godegrees(int angle, int times){ //output: -254<x<+254
   for(int i = 0; i < times; i++){ 
