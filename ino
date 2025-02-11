@@ -12,6 +12,7 @@ notes:
   try clicking in the Serial terminal: v 200
   v is activating motgo method at the argument speed
   customize the clicli.cpp file to get much more!
+   R = 0 , L = 1 , W = 2
 ***************************************/
 #include "ev3lego.h"
 #include "clicli.h"
@@ -19,19 +20,22 @@ notes:
 
 ev3lego roboPaint(2, //encoder1(blue). must be either pin 2 or 3
                 3, //encoder2(yellow)
-                6, //in1R (L298N)direction
-                7, //in2R direction
-                10, //enAR speed
-                8, //in1L
-                9, //in2L
-                12, //enBL
+                6, //in10 (L298N)direction
+                7, //in20 direction
+                10, //enA0 speed
+                8, //in11
+                9, //in21
+                12, //enB1
                 65); //wheel size
 clicli mycli(roboPaint);
 
 void setup() {
   roboPaint.begin();
   mycli.begin();
-  roboPaint.motgo(100, 'R');
+  roboPaint.motgo(100, '0'); // R = 0 , L = 1 , W = 2
+  delay (2000);
+  roboPaint.motgo(100, '1'); // R = 0 , L = 1 , W = 2
+
 }
 
 void loop() {
