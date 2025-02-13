@@ -119,8 +119,8 @@ void clicli::run() {
         break;*/
 
       case 'v':
-        mylego.motgo(command[1], command[2]);
-        break;
+    mylego.motgo(command[1], command[2]);  
+    break;
       /*
       case 'z':
         mylego.gomm(command[1], 1000);
