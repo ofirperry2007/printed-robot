@@ -32,11 +32,14 @@ clicli mycli(roboPaint);
 void setup() {
   roboPaint.begin();
   mycli.begin();
-  roboPaint.motgo(100, '0'); // R = 0 , L = 1 , W = 2
-  delay (2000);
-  roboPaint.motgo(100, '1'); // R = 0 , L = 1 , W = 2
-
+  
+  roboPaint.motgo(100, 0); //  Right motor (R)
+  delay(2000);
+  roboPaint.motgo(100, 1); //  Left motor (L)
+  delay(2000);
+  roboPaint.motgo(100, 2); //  Winch motor (W) 
 }
+
 
 void loop() {
   roboPaint.run();//must have it in the background to update motor position 
