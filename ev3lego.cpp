@@ -38,7 +38,7 @@ ev3lego::ev3lego(int encoder1, int encoder2, int in10, int in20, int ena0, int w
   _encoder1 = encoder1;
   _encoder2 = encoder2;
   _in10 = in10; // R = 0 , L = 1 , W = 2
-  _in20 = in20; // duration
+  _in20 = in20;
   _ena0 = ena0; // speed
   _in11 = in11;
   _in21 = in21;
@@ -157,46 +157,44 @@ double ev3lego::PIDcalc(double inp, int sp, int kp, int ki, int kd){
 }
 
 void ev3lego::motgo(int speed, int motnum) {
-  Serial.print("speed =");
-  Serial.println(speed);
+    Serial.print("Speed = ");
+    Serial.println(speed);
+    Serial.print("Motnum = ");
+    Serial.println(motnum);
 
-  Serial.print("motnum =");
-  Serial.println(motnum);
+    switch (motnum) {
+        case 0:  //  Right Motor (R)
+            Serial.println("Right Motor (R) Selected");
+            digitalWrite(_in20, HIGH);
+            analogWrite(_in10, abs(speed));
+            break;
 
-  if (motnum == '0') {
-    Serial.println("Zero");
-  } 
-  else if (motnum == '1') {  
-    Serial.println("One");
-  } 
-  else { 
-    Serial.print("Invalid motor selection");
-  }
+        case 1:  //  Left Motor (L)
+            Serial.println("Left Motor (L) Selected");
+            digitalWrite(_in21, HIGH);
+            analogWrite(_in11, abs(speed));
+            break;
 
-  if(speed > 0){
-    digitalWrite(_in20, HIGH);
-    analogWrite(_in10, speed); }
-  else if (speed < 0){
-    digitalWrite(_in20, LOW);
-    analogWrite(_in10, abs(speed) ); }
-  else {
-    digitalWrite(_in10, LOW);
-    digitalWrite(_in20, LOW);
-   }
+        case 2:  //  NEW: Winch Motor (W)
+            Serial.println("Winch Motor (W) Selected");
+            digitalWrite(_ena1, HIGH);  // Enable winch motor
+            analogWrite(_wheel, abs(speed));  // Apply speed to the winch
+            break;
 
-  if(speed > 0){
-    digitalWrite(_in21, HIGH);
-    analogWrite(_in11, speed); }
-  else if (speed < 0){
-    digitalWrite(_in21, LOW);
-    analogWrite(_in11, abs(speed) ); }
-  else {
-    digitalWrite(_in11, LOW);
-    digitalWrite(_in21, LOW);
-   }
+        default:
+            Serial.println("Invalid motor selection");
+            return;
+    }
 
+    // Stop motors if speed = 0
+    if (speed == 0) {
+        digitalWrite(_in10, LOW);
+        digitalWrite(_in20, LOW);
+        digitalWrite(_in11, LOW);
+        digitalWrite(_in21, LOW);
+        digitalWrite(_ena1, LOW);  // Stop winch
+    }
 }
-
 /*
 void ev3lego::godegrees(int angle, int times){ //output: -254<x<+254
   for(int i = 0; i < times; i++){ 
