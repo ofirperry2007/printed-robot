@@ -9,7 +9,7 @@
        lego cable pinout:
         green   - 5v
         red     - GND
-        blue    - encoderin1
+        blue    - encoderin1 
         yellow  - encoderin2
         black/white - motor terminals  - connect to a motor driver!        
              
@@ -27,6 +27,8 @@ MPU6050 mpu(Wire);
 volatile long degrees;
 int encoderPin1;  // Static variables to hold encoder pin values
 int encoderPin2;
+int encoderPin3;
+int encoderPin4;
 int pv, error;
 unsigned long previousTime;
 double lastError;
@@ -34,15 +36,17 @@ double cumError, rateError;
 unsigned long timer = 0;
 bool integralflag = false;  // הגדרת המשתנה integralflag
 
-ev3lego::ev3lego(int encoder1, int encoder2, int in10, int in20, int ena0, int wheel, int in11, int in21, int ena1) {
+ev3lego::ev3lego(int encoder1, int encoder2, int encoder3, int encoder4, int in10, int in20, int enA0, int wheel, int in11, int in21, int enB1) {
   _encoder1 = encoder1;
   _encoder2 = encoder2;
+  _encoder3 = encoder3; 
+  _encoder4 = encoder4;
   _in10 = in10; // R = 0 , L = 1 , W = 2
   _in20 = in20;
-  _ena0 = ena0; // speed
+  _enA0 = enA0; // speed
   _in11 = in11;
   _in21 = in21;
-  _ena1 = ena1;
+  _enB1 = enB1;
   _wheel = wheel;
 }
 
@@ -58,19 +62,41 @@ void countDegrees() {
 void ev3lego::begin() {
   Serial.begin(115200);
   Serial.println("\nenjoy using lego motor!");
+    
+ Serial.print("in10 = ");
+ Serial.println(_in10);
+
+ Serial.print("in20 = ");
+ Serial.println(_in20);
+
+ Serial.print("enA0 = ");
+ Serial.println(_enA0);
+
+ Serial.print("in11 = ");
+ Serial.println(_in11);
+
+ Serial.print("in21 = ");
+ Serial.println(_in21);
+
+ Serial.print("enB1 = ");
+ Serial.println(_enB1);
 
   pinMode(_encoder1, INPUT);
   pinMode(_encoder2, INPUT);
+  pinMode(_encoder3, INPUT);
+  pinMode(_encoder4, INPUT);
   pinMode(_in10, OUTPUT);
   pinMode(_in20, OUTPUT);
-  pinMode(_ena0, OUTPUT);  
-  pinMode(_ena1, OUTPUT); 
+  pinMode(_enA0, OUTPUT);  
+  pinMode(_enB1, OUTPUT); 
   pinMode(_in11, OUTPUT);
   pinMode(_in21, OUTPUT); 
 
   // Assign the static variables to the instance values
   encoderPin1 = _encoder1;
   encoderPin2 = _encoder2;
+  encoderPin3 = _encoder3;
+  encoderPin4 = _encoder4;
   
   degrees = 0;
 
@@ -157,29 +183,32 @@ double ev3lego::PIDcalc(double inp, int sp, int kp, int ki, int kd){
 }
 
 void ev3lego::motgo(int speed, int motnum) {
-    Serial.print("Speed = ");
+    /*Serial.print("Speed = ");
     Serial.println(speed);
     Serial.print("Motnum = ");
-    Serial.println(motnum);
+    Serial.println(motnum); */
 
     switch (motnum) {
         case 0:  //  Right Motor (R)
-            Serial.println("Right Motor (R) Selected");
+           // Serial.println("Right Motor (R) Selected");
             digitalWrite(_in20, HIGH);
-            analogWrite(_in10, abs(speed));
+            digitalWrite(_in10, LOW);
+            analogWrite(_enA0, abs(speed));
             break;
 
         case 1:  //  Left Motor (L)
-            Serial.println("Left Motor (L) Selected");
-            digitalWrite(_in21, HIGH);
-            analogWrite(_in11, abs(speed));
+            //Serial.println("Left Motor (L) Selected");
+            digitalWrite(_in11, HIGH);
+            digitalWrite(_in21, LOW);
+            analogWrite(_enB1, abs(speed));
             break;
 
-        case 2:  //  NEW: Winch Motor (W)
+      /*case 2:  //  NEW: Winch Motor (W)
             Serial.println("Winch Motor (W) Selected");
-            digitalWrite(_ena1, HIGH);  // Enable winch motor
+            digitalWrite(_enB1, HIGH);  // Enable winch motor
+            digitalWrite(_enB1, LOW);  // Enable winch motor
             analogWrite(_wheel, abs(speed));  // Apply speed to the winch
-            break;
+            break;*/
 
         default:
             Serial.println("Invalid motor selection");
@@ -192,17 +221,23 @@ void ev3lego::motgo(int speed, int motnum) {
         digitalWrite(_in20, LOW);
         digitalWrite(_in11, LOW);
         digitalWrite(_in21, LOW);
-        digitalWrite(_ena1, LOW);  // Stop winch
+        digitalWrite(_enB1, LOW);  // Stop winch
     }
 }
-/*
+
 void ev3lego::godegrees(int angle, int times){ //output: -254<x<+254
   for(int i = 0; i < times; i++){ 
-    int motspeed = PIDcalc(angle, degrees, 1, 1, 0);//sp, pv. pv is the global variable degrees
+    int motspeed = PIDcalc(angle, degrees,1.5, 1, 0.1);//sp, pv. pv is the global variable degrees
     if(motspeed > 254){motspeed = 254;}
     if(motspeed < -254){motspeed = -254;}
-    motgo(motspeed);
+    motgo(motspeed, 0);
+    motgo(motspeed, 1);
+    Serial.print("motspeed = ");
+    Serial.println(motspeed);
+    
   }
+    Serial.print("degrees = ");
+    Serial.println(degrees);
 }
 
 void ev3lego::godegreesp(int angle, int times, int kp, int ki, int kd){
@@ -210,10 +245,11 @@ void ev3lego::godegreesp(int angle, int times, int kp, int ki, int kd){
       int motspeed = PIDcalc(angle, degrees, kp, ki, kd);//sp, pv. pv is the global variable degrees
       if(motspeed > 254){motspeed = 254;}
       if(motspeed < -254){motspeed = -254;}
-      motgo(motspeed);
+      motgo(motspeed, 0);
+      motgo(motspeed, 1);
     }
 }
-
+/*
 double ev3lego::gomm(int distance, int times){
   int deg = (distance / (_wheel * PI)) * 360;
   godegrees(deg, times);
