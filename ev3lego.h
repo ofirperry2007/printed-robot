@@ -3,7 +3,7 @@
  class ev3lego {
 
   public:
-   ev3lego(int encoder1, int encoder2, int in10, int in20, int ena0, int wheel, int in11, int in21, int ena1); // R = 0 , L = 1 , W = 2
+   ev3lego(int encoder1, int encoder2, int encoder3, int encoder4, int in10, int in20, int enA0, int wheel, int in11, int in21, int enB1); // R = 0 , L = 1 , W = 2
    void begin();   //must be called from setup()
    void run();   //must be called from loop()
    long ang();
@@ -18,7 +18,7 @@
 
 
   private:
-   int _encoder1, _encoder2, _in10, _in20, _ena0, _wheel, _in11, _in21, _ena1;
+   int _encoder1, _encoder2, _encoder3, _encoder4, _in10, _in20, _enA0, _wheel, _in11, _in21, _enB1;
    double _kp, _ki, _kd;
    bool integralflag = false;
  };
