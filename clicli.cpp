@@ -125,7 +125,7 @@ void clicli::run() {
       case 'z':
         mylego.gomm(command[1], 1000);
         break;
-
+*/
       case 'p':
        mylego.godegreesp(command[1],command[2],command[3],command[4],0);
        Serial.print(command[1]);
@@ -135,7 +135,7 @@ void clicli::run() {
        mylego.godegrees(command[1],command[2]);
        break;
 
-       message_pos = 0;     //Reset for the next message*/
+       message_pos = 0;     //Reset for the next message
       }
    }
    delay (60); 
