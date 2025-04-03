@@ -52,12 +52,19 @@ void ev3lego::begin() {
     Serial.println("\nLego motor initialized!");
 
     // Debug - print motor setup
-    Serial.print("in10 = "); Serial.println(_in10);
-    Serial.print("in20 = "); Serial.println(_in20);
-    Serial.print("enA0 = "); Serial.println(_enA0);
-    Serial.print("in11 = "); Serial.println(_in11);
-    Serial.print("in21 = "); Serial.println(_in21);
-    Serial.print("enB1 = "); Serial.println(_enB1);
+Serial.print("in10 = "); Serial.println(_in10);
+delay(500);
+Serial.print("in20 = "); Serial.println(_in20);
+delay(500);
+Serial.print("enA0 = "); Serial.println(_enA0);
+delay(500);
+Serial.print("in11 = "); Serial.println(_in11);
+delay(500);
+Serial.print("in21 = "); Serial.println(_in21);
+delay(500);
+Serial.print("enB1 = "); Serial.println(_enB1);
+delay(500);
+
 
     pinMode(_encoder1, INPUT);
     pinMode(_encoder2, INPUT);
