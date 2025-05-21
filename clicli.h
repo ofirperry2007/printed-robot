@@ -1,17 +1,16 @@
 #ifndef CLICLI_H
 #define CLICLI_H
-
 #include "ev3lego.h"
 
-class clicli {
+ class clicli {
   private:
-    ev3lego &mylego;  // הפניה לאובייקט EV3LEGO לניהול המנועים
-    int number;
-
+  ev3lego &mylego;//(ಥ﹏ಥ)
+  int number;//(´;︵;`) ༼☯﹏☯༽
+  
   public: 
-    clicli(ev3lego &mylego);  // בנאי: מקבל הפניה לאובייקט ev3lego
-    void begin();   // יש לקרוא לה בפונקציה setup()
-    void run();     // יש לקרוא לה בפונקציה loop()
-};
+   clicli(ev3lego &mylego);
+   void begin();   //must be called from  void setup() --- > ( ´•̥̥̥o•̥̥̥`)(˃̣̣̥╭╮˂̣̣̥)‧º·˚
+   void run();   //must be called from  void loop() --- >  (´;︵;`) (T⌓T) 
 
-#endif  
+ };
+#endif 
