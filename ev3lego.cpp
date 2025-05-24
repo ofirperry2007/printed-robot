@@ -204,44 +204,44 @@ void ev3lego::godegreesp_until(int targetAngle, int kp, int ki, int kd, bool rot
 
     delay(10);                                     // מחכים 10ms לפני שממשיכים כדי לא להציף את הלולאה
   }
+motgo(0, 0);                                  // עוצר את מנוע 0
+motgo(0, 1);                                  // עוצר את מנוע 1
 }
-void ev3lego::motgo(int speed, int motnum) {     // פונקציה שמפעילה מנוע לפי מהירות ומספר מנוע (0, 1 או 2)
-  if (speed == 0) {                               // אם המהירות היא 0 – עוצרים את המנוע
-    switch (motnum) {
-      case 0:                                     // מנוע A
-        digitalWrite(_in10, LOW);                 // מפסיקים זרם קדימה
-        digitalWrite(_in20, LOW);                 // מפסיקים זרם אחורה
-        analogWrite(_enA0, 0);                    // לא שולחים זרם למנוע
-        break;
-      case 1:                                     // מנוע B
-        digitalWrite(_in11, LOW);
-        digitalWrite(_in21, LOW);
-        analogWrite(_enB1, 0);
-        break;
-      case 2:                                     // מנוע C (נוסף)
-        digitalWrite(_in12, LOW);
-        digitalWrite(_in22, LOW);
-        analogWrite(_enC2, 0);
-        break;
-    }
-    return;                                       // יוצאים מהפונקציה (לא מפעילים את שאר הקוד)
+
+void ev3lego::driveWithPID(int targetDegrees, bool rotateInPlace, int kp, int ki, int kd) {
+  resetEncoders();                            // מאפס את האנקודרים כדי להתחיל למדוד מהתחלה
+  godegreesp_until(targetDegrees, kp, ki, kd, rotateInPlace); // נוסע לזווית יעד עם בקר PID
+}
+
+void ev3lego::resetEncoders() {
+  degreesA = 0;                               // מאפס את מונה הזווית למנוע A
+  degreesB = 0;                               // מאפס את מונה הזווית למנוע B
+}
+
+void ev3lego::goStraightWithPID(int targetTicks, int kp, int ki, int kd) {
+  resetEncoders();                            // מאפס את האנקודרים כדי להתחיל מחדש
+
+  while (true) {                              // לולאה שרצה עד שמגיעים למטרה
+    long ticksA = ang(0);  // קורא את הזווית הנוכחית של מנוע A
+    long ticksB = ang(1);  // קורא את הזווית הנוכחית של מנוע B
+    long avgTicks = (ticksA + ticksB) / 2;    // מחשב ממוצע של שני המנועים
+
+    if (abs(avgTicks) >= targetTicks) break; // אם הגענו או עברנו את היעד – יוצאים מהלולאה
+
+    double power = PIDcalc(avgTicks, targetTicks, kp, ki, kd); // מחשב כוח לתיקון באמצעות PID
+
+    motgo(power, 0);  // מפעיל את מנוע A עם הכוח המחושב
+    motgo(power, 1);  // מפעיל את מנוע B עם הכוח המחושב
+
+    Serial.print("Ticks A: "); Serial.print(ticksA);         // מדפיס נתונים ל-Serial Monitor
+    Serial.print(" | Ticks B: "); Serial.print(ticksB);
+    Serial.print(" | Avg: "); Serial.println(avgTicks);
+
+    delay(10);                                 // מחכה 10 מילישניות כדי לא להעמיס
   }
 
-  switch (motnum) {                               // אחרת – מפעילים את המנוע בכיוון ובמהירות הנכונים
-    case 0:
-      digitalWrite(_in10, speed > 0);             // אם המהירות חיובית – קדימה, אחרת – אחורה
-      digitalWrite(_in20, speed <= 0);
-      analogWrite(_enA0, abs(speed));             // שולחים זרם לפי ערך מוחלט של המהירות
-      break;
-    case 1:
-      digitalWrite(_in11, speed <= 0);
-      digitalWrite(_in21, speed > 0);
-      analogWrite(_enB1, abs(speed));
-      break;
-    case 2:
-      digitalWrite(_in12, speed > 0);
-      digitalWrite(_in22, speed <= 0);
-      analogWrite(_enC2, abs(speed));
-      break;
-  }
+  motgo(0, 0);  // עוצר את מנוע A
+  motgo(0, 1);  // עוצר את מנוע B
+
+  Serial.println("Finished driving straight."); // מדפיס סיום
 }
