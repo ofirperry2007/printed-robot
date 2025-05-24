@@ -1,16 +1,16 @@
-#ifndef CLICLI_H
-#define CLICLI_H
-#include "ev3lego.h"
+#ifndef CLICLI_H                    // סימן התחלה – אם לא הגדרנו את CLICLI_H עדיין
+#define CLICLI_H                    // מגדיר את CLICLI_H כדי שלא נטען פעמיים
+#include "ev3lego.h"              // מחבר את הקובץ שמטפל ברובוט ובמנועים
 
- class clicli {
+class clicli {                    // מגדיר מחלקה בשם clicli
   private:
-  ev3lego &mylego;//(ಥ﹏ಥ)
-  int number;//(´;︵;`) ༼☯﹏☯༽
+  ev3lego &mylego;               // משתנה שמצביע על הרובוט עצמו
+  int number;                    // משתנה מספרי פנימי
   
   public: 
-   clicli(ev3lego &mylego);
-   void begin();   //must be called from  void setup() --- > ( ´•̥̥̥o•̥̥̥`)(˃̣̣̥╭╮˂̣̣̥)‧º·˚
-   void run();   //must be called from  void loop() --- >  (´;︵;`) (T⌓T) 
+   clicli(ev3lego &mylego);      // פעולה שמפעילה את המחלקה עם חיבור לרובוט
+   void begin();                 // פעולה שמריצים בתחילת התוכנית
+   void run();                   // פעולה שמריצים כל הזמן בתוך loop()
 
- };
-#endif 
+};
+#endif                           // סוף התנאי – סוגר את ההגדרה
