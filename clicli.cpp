@@ -1,10 +1,4 @@
-/*  
-                    CLI Software for Arduino
-
-               A Simple Command Line Interface 
-  Example functions:              
-              Feature                |  CLI Usage
-________________________________________/*
+/*
 
                     CLI Software for Arduino
 
@@ -18,79 +12,80 @@ ___________________________________________________
  Digital Read                        |  r (pin)
  Analog Read                         |  e (pin) 
 
-               
       by Gal Arbel
       Oct 2022
 */
 
+#include "clicli.h"               // מוסיף את הקובץ של הפקודות האישיות שלנו
+#include "Arduino.h"              // קובץ שמאפשר להשתמש בפונקציות של ארדואינו
+#include "HardwareSerial.h"       // מוסיף תמיכה בתקשורת סיריאלית (USB)
 
-#include "clicli.h"
-#include "Arduino.h"
-#include "HardwareSerial.h"
+const unsigned int MAX_MESSAGE_LENGTH = 64;  // כמה תווים אפשר לקבל בפקודה אחת
 
-const unsigned int MAX_MESSAGE_LENGTH = 64;
-
+// בנאי של המחלקה, שומר את המנועים שאנחנו שולטים עליהם
 clicli::clicli(ev3lego &mylego) : mylego(mylego), number(7) {
-    // Constructor body, if needed
+    // לא עושים כלום בבנאי עצמו כרגע
 }
 
 void clicli::begin() {
-  //
+  // פונקציה ריקה, אפשר להכניס דברים שנרצה שיקרו בהתחלה
 }
+
 void clicli::run() {
 
-// CLI - Messages from Terminal
- static char message[MAX_MESSAGE_LENGTH];
-static unsigned int message_pos = 0;
+ static char message[MAX_MESSAGE_LENGTH];  // איפה שומרים את הפקודה שהמשתמש כותב
+ static unsigned int message_pos = 0;      // באיזה תו אנחנו נמצאים
 
-while (Serial.available() > 0) {
+while (Serial.available() > 0) {           // כל עוד יש מידע חדש מהמשתמש
 
-  char inByte = Serial.read();
-Serial.print("Got byte: ");
-Serial.println(inByte);
+  char inByte = Serial.read();             // קרא תו חדש מהמסך
+  Serial.print("Got byte: ");
+  Serial.println(inByte);                 // הדפס מה שקיבלת
 
+  // אם זה לא Enter ועדיין לא הגענו לסוף
   if (inByte != '\n' && inByte != '\r' && message_pos < MAX_MESSAGE_LENGTH - 1) {
-    message[message_pos++] = inByte;
-  } else if (message_pos > 0) {
-    message[message_pos] = '\0';
-    Serial.println(message); // echo
+    message[message_pos++] = inByte;      // שים את התו בתוך ההודעה
+  } else if (message_pos > 0) {           // אם כן נגמרה ההודעה
+    message[message_pos] = '\0';         // סיים את המחרוזת
+    Serial.println(message);              // תראה מה המשתמש שלח
 
-    int command[5];
-    int argindex = 0;
-    char cmd = '\0';
-    char delim[] = " ";
-    char tmpmsg[MAX_MESSAGE_LENGTH];
+    int command[5];                       // כאן נשים את המספרים שהמשתמש שלח
+    int argindex = 0;                     // מונה כמה פרמטרים קיבלנו
+    char cmd = '\0';                     // מה סוג הפקודה (האות הראשונה)
+    char delim[] = " ";                  // מפריד לפי רווחים
+    char tmpmsg[MAX_MESSAGE_LENGTH];     // עותק של ההודעה שנפרק
 
-    strcpy(tmpmsg, message);
-    message_pos = 0;
+    strcpy(tmpmsg, message);             // עושים העתק כדי לא להרוס את המקור
+    message_pos = 0;                     // מתחילים מחדש לקלוט הודעה חדשה
 
-    char *ptr = strtok(tmpmsg, delim);
+    char *ptr = strtok(tmpmsg, delim);   // לוקחים מילה ראשונה
     while (ptr != NULL) {
       if (argindex == 0) {
-        cmd = ptr[0];
+        cmd = ptr[0];                    // האות הראשונה היא סוג הפקודה
       } else {
-        command[argindex] = atoi(ptr);
+        command[argindex] = atoi(ptr);  // הופכים טקסט למספר
       }
       argindex++;
-      ptr = strtok(NULL, delim);
+      ptr = strtok(NULL, delim);        // ממשיכים למילה הבאה
     }
 
     Serial.print("Parsed command: ");
-    Serial.println(cmd);
+    Serial.println(cmd);                // מראים איזו פקודה נקלטה
     Serial.print("Args: ");
     for (int i = 1; i < argindex; i++) {
-      Serial.print(command[i]);
+      Serial.print(command[i]);         // מראים את כל המספרים שהיו בה
       Serial.print(" ");
     }
     Serial.println();
 
     if (argindex < 2) {
-      Serial.println("Not enough arguments");
+      Serial.println("Not enough arguments");  // אם חסר מידע - לא ממשיכים
       return;
     }
 
+    // לפי סוג הפקודה - עושים פעולה
     switch (cmd) {
-      case 'h':
+      case 'h': // הדלק פין (HIGH)
         pinMode(command[1], OUTPUT);
         digitalWrite(command[1], HIGH);
         Serial.print("Pin ");
@@ -98,7 +93,7 @@ Serial.println(inByte);
         Serial.println(" is SET");
         break;
 
-      case 'l':
+      case 'l': // כבה פין (LOW)
         pinMode(command[1], OUTPUT);
         digitalWrite(command[1], LOW);
         Serial.print("Pin ");
@@ -106,7 +101,7 @@ Serial.println(inByte);
         Serial.println(" is RESET");
         break;
 
-      case 'r':
+      case 'r': // קרא ערך דיגיטלי מפין
         pinMode(command[1], INPUT);
         Serial.print("Pin ");
         Serial.print(command[1]);
@@ -114,7 +109,7 @@ Serial.println(inByte);
         Serial.println(digitalRead(command[1]));
         break;
 
-      case 'e':
+      case 'e': // קרא ערך אנלוגי מפין
         pinMode(command[1], INPUT);
         Serial.print("Pin ");
         Serial.print(command[1]);
@@ -122,7 +117,7 @@ Serial.println(inByte);
         Serial.println(analogRead(command[1]));
         break;
 
-      case 'v':
+      case 'v': // הרץ מנוע מסוים במהירות
         mylego.motgo(command[1], command[2]);
         Serial.print("Motor ");
         Serial.print(command[2]);
@@ -130,144 +125,23 @@ Serial.println(inByte);
         Serial.println(command[1]);
         break;
 
-      case 'p':
+      case 'p': // תנועה מדויקת עם PID
         mylego.godegreesp_until(command[1], command[2], command[3], command[4], 0);
         Serial.print("Going ");
         Serial.print(command[1]);
         Serial.println(" degrees (custom PID)");
         break;
 
-      case 'q':
+      /*case 'q': // פקודה שבוטלה
         mylego.godegrees(command[1], command[2]);
         Serial.print("Going ");
         Serial.print(command[1]);
         Serial.println(" degrees");
-        break;
+        break; */
     }
-    message_pos = 0;
+    message_pos = 0; // מכינים מקום לפקודה הבאה
   }
-  delay(60);
-}
- 
-}
-___________
- Digital Write HIGH to a specific pin |  h (pin)
- Digital Write LOW to a specific pin  |  l (pin)
- Shoot command                        |  s (angle)
- Digital Read                         |  r (pin)
- Analog Read                          |  e (pin) 
-
-      by Gal Arbel
-      Oct 2022
-*/
-
-#include "clicli.h"
-#include "Arduino.h"
-
-const unsigned int MAX_MESSAGE_LENGTH = 64;
-
-// בנאי של המחלקה clicli
-clicli::clicli(ev3lego &mylego) : mylego(mylego), number(7) {
-    // גוף הבנאי, אם צריך
+  delay(60); // מחכים קצת כדי לא להציף
 }
 
-void clicli::begin() {
-    Serial.begin(9600);
-    Serial.println("CLI interface started.");
-}
-
-void clicli::run() {
-    // CLI - קבלת פקודות מהטרמינל
-    while (Serial.available() > 0) { 
-        char message[MAX_MESSAGE_LENGTH];
-        static unsigned int message_pos = 0;
-        char inByte = Serial.read(); // קריאת תו מהבאפר הסיריאלי
-
-        if (inByte != '\n' && (message_pos < MAX_MESSAGE_LENGTH - 1)) {
-            message[message_pos] = inByte; // הוספת התו להודעה
-            message_pos++;
-        } else {
-            message[message_pos] = '\0'; // סיום המחרוזת
-            Serial.print("Received: ");
-            Serial.println(message); // הדפסת ההודעה חזרה לטרמינל
-
-            int command[4] = {0};
-            int argindex = 0;
-            char cmd;
-            char delim[] = " ";
-            char tmpmsg[MAX_MESSAGE_LENGTH];
-            
-            strcpy(tmpmsg, message);
-            message_pos = 0;
-            message[message_pos] = '\0'; // איפוס ההודעה
-
-            char *ptr = strtok(tmpmsg, delim);
-            while (ptr != NULL) {
-                if (argindex == 0) {
-                    cmd = ptr[0];
-                }
-                command[argindex] = atoi(ptr);   
-                argindex++;  
-                ptr = strtok(NULL, delim);
-            } 
-
-            // עיבוד הפקודה שהתקבלה
-            switch (cmd) {
-                case 'h': // Set port to HIGH
-                    pinMode(command[1], OUTPUT);
-                    digitalWrite(command[1], HIGH);
-                    Serial.print("Pin "); 
-                    Serial.print(command[1]);   
-                    Serial.println(" is SET");
-                    break;
-                
-                case 'l': // Set port to LOW
-                    pinMode(command[1], OUTPUT);
-                    digitalWrite(command[1], LOW);
-                    Serial.print("Pin "); 
-                    Serial.print(command[1]);   
-                    Serial.println(" is RESET");   
-                    break;
-                
-                case 'r': // digital read
-                    pinMode(command[1], INPUT);
-                    Serial.print("Pin "); 
-                    Serial.print(command[1]);   
-                    Serial.print(" Value = "); 
-                    Serial.println(digitalRead(command[1]));   
-                    break;
-                
-                case 'e': // analog read
-                    pinMode(command[1], INPUT);
-                    Serial.print("Pin "); 
-                    Serial.print(command[1]);   
-                    Serial.print(" Value = "); 
-                    Serial.println(analogRead(command[1]));   
-                    break;
-
-                case 'v': // שליטה על מנוע
-                    mylego.motgo(command[1], command[2]);  
-                    Serial.print("Motor speed set to ");
-                    Serial.println(command[1]);
-                    break;
-
-                case 'p': // הפעלת פונקציה godegreesp
-                    mylego.godegreesp(command[1], command[2], command[3], command[4], 0);
-                    Serial.print("Executing godegreesp with angle: ");
-                    Serial.println(command[1]);
-                    break;
-                
-                case 'q': // הפעלת פונקציה godegrees
-                    mylego.godegrees(command[1], command[2]);
-                    Serial.print("Executing godegrees with angle: ");
-                    Serial.println(command[1]);
-                    break;
-
-                default:
-                    Serial.println("Unknown command.");
-                    break;
-            }
-        }
-    }
-    delay(60); 
 }
