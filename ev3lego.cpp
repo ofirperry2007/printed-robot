@@ -1,67 +1,64 @@
-#include "Arduino.h"
-#include "ev3lego.h"
+#include "Arduino.h"             // כולל את ספריית ארדואינו – פונקציות כמו digitalWrite, millis וכו'
+#include "ev3lego.h"             // כולל את ההגדרות והפונקציות של מחלקת ev3lego (שולטת ברובוט)
 
-volatile long degreesA = 0;  // זווית מנוע A
-volatile long degreesB = 0;  // זווית מנוע B
+volatile long degreesA = 0;     // שומר כמה צעדים (דירגות) מנוע A עשה
+volatile long degreesB = 0;     // שומר כמה צעדים מנוע B עשה
 
-int encoderPin1, encoderPin2; // פינים לאנקודר של מנוע A
-int encoderPin3, encoderPin4; // פינים לאנקודר של מנוע B
+int encoderPin1, encoderPin2;   // מספרי פינים של חיישני אנקודר של מנוע A
+int encoderPin3, encoderPin4;   // מספרי פינים של חיישני אנקודר של מנוע B
 
-unsigned long previousTime = 0;
-double lastError = 0;
-double cumError = 0;
-bool integralFlag = false;
+unsigned long previousTime = 0; // הזמן האחרון שבו נמדדה שגיאה – עבור PID
+double lastError = 0;           // שגיאה קודמת – להפרש בשגיאה בזמן עבור PID
+double cumError = 0;            // צבירה של שגיאות – החלק ה־I של PID
+bool integralFlag = false;      // דגל – האם לצבור שגיאות או לא
 
-void ev3lego::run() {
-    // לא מבוצעת פעולה כלשהי
-}
-
-ev3lego::ev3lego(int encoder1, int encoder2, int encoder3, int encoder4, int in10, int in20, int enA0, int in11, int in21, int enB1, int in12, int in22, int enC2, int wheel) {
-  _encoder1 = encoder1;
-  _encoder2 = encoder2;
-  _encoder3 = encoder3; 
-  _encoder4 = encoder4;
-  _in10 = in10;
-  _in20 = in20;
-  _enA0 = enA0;
-  _in11 = in11;
-  _in21 = in21;
-  _enB1 = enB1;
-  _in12 = in12;
-  _in22 = in22;
-  _enC2 = enC2;
-  _wheel = wheel;
+ev3lego::ev3lego(int encoder1, int encoder2, int encoder3, int encoder4,
+                 int in10, int in20, int enA0,
+                 int in11, int in21, int enB1,
+                 int in12, int in22, int enC2,
+                 int wheel) {
+  _encoder1 = encoder1;       // שומר את הפין של אנקודר A1
+  _encoder2 = encoder2;       // שומר את הפין של אנקודר A2
+  _encoder3 = encoder3;       // שומר את הפין של אנקודר B1
+  _encoder4 = encoder4;       // שומר את הפין של אנקודר B2
+  _in10 = in10;               // פין כיוון למנוע A
+  _in20 = in20;               // פין כיוון נוסף למנוע A
+  _enA0 = enA0;               // פין מהירות למנוע A
+  _in11 = in11;               // פין כיוון למנוע B
+  _in21 = in21;               // פין כיוון נוסף למנוע B
+  _enB1 = enB1;               // פין מהירות למנוע B
+  _in12 = in12;               // פין כיוון למנוע C
+  _in22 = in22;               // פין כיוון נוסף למנוע C
+  _enC2 = enC2;               // פין מהירות למנוע C
+  _wheel = wheel;             // שומר את גודל הגלגל
 }
 
 void countDegreesA() {
   if (digitalRead(encoderPin1) == digitalRead(encoderPin2)) {
-    degreesA++;
+    degreesA++;                // אם שני הפינים שווים – המנוע הסתובב קדימה
   } else {
-    degreesA--;
+    degreesA--;                // אחרת – אחורה
   }
-  Serial.print("degrees A: ");
-  Serial.println(degreesA);
 }
 
 void countDegreesB() {
   if (digitalRead(encoderPin3) == digitalRead(encoderPin4)) {
-    degreesB++;
+    degreesB++;                // קדימה
   } else {
-    degreesB--;
+    degreesB--;                // אחורה
   }
-  Serial.print("degrees B: ");
-  Serial.println(degreesB);
 }
 
-void ev3lego::begin() {
-  Serial.begin(115200);
-  Serial.println("\nEV3 motor initialized!");
+void ev3lego::begin() {                        // מכין את הרובוט לפעולה
+  Serial.begin(115200);                        // מפעיל תקשורת עם המחשב
+  Serial.println("\nEV3 motor initialized!");   // מדפיס הודעת התחלה
 
-  pinMode(_encoder1, INPUT);
+  pinMode(_encoder1, INPUT);                   // הגדרת פיני חיישני אנקודר כקלט
   pinMode(_encoder2, INPUT);
   pinMode(_encoder3, INPUT_PULLUP);
   pinMode(_encoder4, INPUT_PULLUP);
-  pinMode(_in10, OUTPUT);
+
+  pinMode(_in10, OUTPUT);                      // פיני כיוון ומהירות למנועים
   pinMode(_in20, OUTPUT);
   pinMode(_enA0, OUTPUT);
   pinMode(_in11, OUTPUT);
@@ -71,291 +68,180 @@ void ev3lego::begin() {
   pinMode(_in22, OUTPUT);
   pinMode(_enC2, OUTPUT);
 
-  encoderPin1 = _encoder1;
+  encoderPin1 = _encoder1;                     // שמירה של הפינים לשימוש בפונקציות הספירה
   encoderPin2 = _encoder2;
   encoderPin3 = _encoder3;
   encoderPin4 = _encoder4;
 
-  degreesA = 0;
+  degreesA = 0;                                // מאפס את הספירה
   degreesB = 0;
 
-  // חיבור לאנקודרים, כל אחד עם פונקציה מתאימה
-  attachInterrupt(digitalPinToInterrupt(_encoder1), countDegreesA, CHANGE);  // אנסור למנוע A
-  attachInterrupt(digitalPinToInterrupt(_encoder3), countDegreesB, CHANGE);  // אנסור למנוע B
-  
-  previousTime = millis();
+  attachInterrupt(digitalPinToInterrupt(_encoder1), countDegreesA, CHANGE); // קובע תגובה לשינוי מצב חיישן A
+  attachInterrupt(digitalPinToInterrupt(_encoder3), countDegreesB, CHANGE); // כנ"ל לחיישן B
 
-  Serial.println("Setup finished");
+  previousTime = millis();                      // שומר את הזמן הנוכחי כדי להתחיל למדוד לפונקציית PID
+  Serial.println("Setup finished");             // מדפיס הודעה שההגדרות הסתיימו
+}
+long ev3lego::ang(int motnum) {                  // פונקציה שמחזירה את הזווית של מנוע לפי מספר (0 או 1)
+  switch (motnum) {                              // בודקים איזה מספר מנוע קיבלנו
+    case 0: return degreesA;                     // אם זה מנוע מספר 0 – נחזיר את הזווית של מנוע A
+    case 1: return degreesB;                     // אם זה מנוע מספר 1 – נחזיר את הזווית של מנוע B
+    default: return 0;                           // אם קיבלנו מספר אחר – נחזיר 0 (לא קיים)
+  }
 }
 
-long ev3lego::ang(int motnum) {
-  switch (motnum) {
-    case 0: return degreesA; // מנוע A
-    case 1: return degreesB; // מנוע B
-    default: return 0;
-  }
+void ev3lego::printDegrees() {                   // פונקציה שמדפיסה את זוויות המנועים
+  Serial.print("degreesA: ");                    // מדפיס את הטקסט "degreesA: "
+  Serial.println(degreesA);                      // מדפיס את המספר של זווית מנוע A בשורה נפרדת
+  Serial.print(" degreesB: ");                   // מדפיס את הטקסט "degreesB: "
+  Serial.println(degreesB);                      // מדפיס את המספר של זווית מנוע B בשורה נפרדת
 }
 
 double ev3lego::PIDcalc(double inp, int sp, int kp, int ki, int kd) {
-  unsigned long currentTime = millis();
-  double elapsedTime = (currentTime - previousTime) / 1000.0;
-  double error = inp - sp;
+  unsigned long currentTime = millis();          // שומר את הזמן הנוכחי במילישניות מאז שה-Arduino התחיל לפעול
+  double elapsedTime = (currentTime - previousTime) / 1000.0; // מחשב כמה זמן עבר מאז הפעם הקודמת, בשניות
+  double error = inp - sp;                       // מחשב את ה"שגיאה" – כמה אנחנו רחוקים מהמטרה
 
-  if (error * lastError < 0) {
-    integralFlag = true;
-    cumError = 0;
-    Serial.println("Error direction changed, resetting integral.");
+  if (error * lastError < 0) {                   // אם השגיאה שינתה כיוון (לדוגמה מ+ ל-)
+    integralFlag = true;                         // מדליקים דגל שמסמן שהשגיאה עברה דרך 0
+    cumError = 0;                                // מאפסים את השגיאה המצטברת כדי לא להוסיף ערכים מיותרים
   } else {
-    integralFlag = false;
+    integralFlag = false;                        // אם השגיאה לא עברה דרך 0 – מכבים את הדגל
   }
 
-  if (!integralFlag) {
-    cumError += error * elapsedTime;
+  if (!integralFlag) {                           // רק אם השגיאה לא שינתה כיוון
+    cumError += error * elapsedTime;             // מוסיפים לשגיאה המצטברת את השגיאה הנוכחית כפול הזמן שחלף
   }
 
-  if (elapsedTime > 0) {
-    double rateError = (error - lastError) / elapsedTime;
-    double out = kp * error + ki * cumError + kd * rateError;
+  if (elapsedTime > 0) {                         // אם באמת עבר זמן (ולא התחלה של המדידה)
+    double rateError = (error - lastError) / elapsedTime; // מחשבים את קצב השינוי של השגיאה (נגזרת)
+    double out =                                  
+      kp * error +                                // חלק פרופורציונלי (P): מתקן לפי כמה אנחנו רחוקים מהמטרה
+      ki * cumError +                             // חלק אינטגרלי (I): מצטבר עם הזמן כדי לשפר תיקון איטי
+      kd * rateError;                             // חלק נגזרי (D): בודק כמה מהר השגיאה משתנה כדי לא "לעוף" יותר מדי
 
-    lastError = error;
-    previousTime = currentTime;
+    lastError = error;                            // מעדכנים את השגיאה האחרונה לזו הנוכחית
+    previousTime = currentTime;                   // מעדכנים את הזמן האחרון למדידה הנוכחית
 
-    if (out > 254) out = 254;
-    if (out < -254) out = -254;
-
-    Serial.print("degrees = ");
-    Serial.println(degreesA);  // אם רוצים לעקוב אחרי מנוע A
-    Serial.print("PID output = ");
-    Serial.println(out);
-
-    return out;
+    out = constrain(out, -254, 254);              // מגבילים את הפלט לטווח -254 עד 254 כדי שלא יהיה מוגזם
+    return out;                                   // מחזירים את הפלט של הבקר
   }
 
-  return 0;
+  return 0;                                       // אם לא עבר זמן – פשוט מחזירים 0
 }
-
-void ev3lego::motgo(int speed, int motnum) {
-  if (speed == 0) {
+void ev3lego::motgo(int speed, int motnum) {     // פונקציה שמפעילה מנוע לפי מהירות ומספר מנוע (0, 1 או 2)
+  if (speed == 0) {                               // אם המהירות היא 0 – עוצרים את המנוע
     switch (motnum) {
-      case 0:
-        digitalWrite(_in10, LOW);
-        digitalWrite(_in20, LOW);
-        analogWrite(_enA0, 0);
+      case 0:                                     // מנוע A
+        digitalWrite(_in10, LOW);                 // מפסיקים זרם קדימה
+        digitalWrite(_in20, LOW);                 // מפסיקים זרם אחורה
+        analogWrite(_enA0, 0);                    // לא שולחים זרם למנוע
         break;
-      case 1:
+      case 1:                                     // מנוע B
         digitalWrite(_in11, LOW);
         digitalWrite(_in21, LOW);
         analogWrite(_enB1, 0);
         break;
-      case 2:
+      case 2:                                     // מנוע C (נוסף)
         digitalWrite(_in12, LOW);
         digitalWrite(_in22, LOW);
         analogWrite(_enC2, 0);
         break;
     }
-    return;
+    return;                                       // יוצאים מהפונקציה (לא מפעילים את שאר הקוד)
   }
 
-  switch (motnum) {
+  switch (motnum) {                               // אחרת – מפעילים את המנוע בכיוון ובמהירות הנכונים
     case 0:
-      if (speed > 0) {
-        digitalWrite(_in10, HIGH);
-        digitalWrite(_in20, LOW);
-      } else {
-        digitalWrite(_in10, LOW);
-        digitalWrite(_in20, HIGH);
-      }
-      analogWrite(_enA0, abs(speed));
+      digitalWrite(_in10, speed > 0);             // אם המהירות חיובית – קדימה, אחרת – אחורה
+      digitalWrite(_in20, speed <= 0);
+      analogWrite(_enA0, abs(speed));             // שולחים זרם לפי ערך מוחלט של המהירות
       break;
-
     case 1:
-  if (speed > 0) {
-    digitalWrite(_in11, LOW);     // היה HIGH
-    digitalWrite(_in21, HIGH);    // היה LOW
-  } else {
-    digitalWrite(_in11, HIGH);    // היה LOW
-    digitalWrite(_in21, LOW);     // היה HIGH
-  }
-  analogWrite(_enB1, abs(speed));
-  break;
-
-
+      digitalWrite(_in11, speed <= 0);
+      digitalWrite(_in21, speed > 0);
+      analogWrite(_enB1, abs(speed));
+      break;
     case 2:
-      if (speed > 0) {
-        digitalWrite(_in12, HIGH);
-        digitalWrite(_in22, LOW);
-      } else {
-        digitalWrite(_in12, LOW);
-        digitalWrite(_in22, HIGH);
-      }
+      digitalWrite(_in12, speed > 0);
+      digitalWrite(_in22, speed <= 0);
       analogWrite(_enC2, abs(speed));
       break;
   }
 }
 
-void ev3lego::godegrees(int angle, int times) {
-  for (int i = 0; i < times; i++) {
-    int speed = PIDcalc(angle, degreesA, 1.5, 1, 0.1);  // מנוע A
-    speed = constrain(speed, -254, 254);
-    motgo(speed, 0);
-    motgo(speed, 1);
-    Serial.print("Motor speed = ");
-    Serial.println(speed);
-    delay(10);
-  }
-
-  Serial.print("Final degrees = ");
-  Serial.println(degreesA);
-}
-
 void ev3lego::godegreesp_until(int targetAngle, int kp, int ki, int kd, bool rotateInPlace) {
-  int errorMargin = 3;  // כמה מעלות סטייה מותרת
-  cumError = 0;
-  lastError = 0;
-  integralFlag = false;
-  previousTime = millis();
+  int errorMargin = 3;                            // טווח טעות שמותר (כמה מעלות אפשר לטעות)
+  cumError = 0;                                   // איפוס של השגיאה המצטברת
+  lastError = 0;                                  // איפוס של השגיאה האחרונה
+  integralFlag = false;                           // מכבים את דגל ה-integral
+  previousTime = millis();                        // מתחילים לספור זמן
 
-  while (true) {
-    int currentA = degreesA;
-    int currentB = degreesB;
-    int avgDegrees = (currentA + currentB) / 2;
+  while (true) {                                  // לולאה שרצה עד שנעצור אותה מבפנים
+    int currentA = degreesA;                      // שומרים את הזווית הנוכחית של מנוע A
+    int currentB = degreesB;                      // שומרים את הזווית הנוכחית של מנוע B
+    int avgDegrees = (currentA + currentB) / 2;   // ממוצע הזוויות – למקרה של תנועה ישרה
 
-    // חישוב שגיאה בהתאם לסוג התנועה
-    int error = 0;
-    if (rotateInPlace) {
-      error = targetAngle - abs(currentA - currentB);  // לבדוק אם הגענו לזווית הסיבוב
-    } else {
-      error = targetAngle - avgDegrees;  // חישוב השגיאה בתנועה ישרה
-    }
+    int error = rotateInPlace ?                   // אם רוצים להסתובב במקום – מחשבים שגיאה לפי ההפרש בין המנועים
+      targetAngle - abs(currentA - currentB) :    // סיבוב במקום
+      targetAngle - avgDegrees;                   // תנועה ישרה
 
-    // אם השגיאה בתוך טווח המותר, עוצרים
-    if (abs(error) <= errorMargin) {
-      break;
-    }
+    if (abs(error) <= errorMargin) break;         // אם אנחנו מספיק קרובים למטרה – יוצאים מהלולאה
 
-    // חישוב המהירות על פי PID
-    int speed = PIDcalc(rotateInPlace ? abs(currentA - currentB) : avgDegrees, targetAngle, kp, ki, kd);
-    speed = constrain(speed, -254, 254);  // קיבוע המהירות בתחום המותר
+    int speed = PIDcalc(                           // מחשבים מה המהירות הנכונה לתקן את השגיאה
+      rotateInPlace ? abs(currentA - currentB) : avgDegrees,
+      targetAngle, kp, ki, kd);
 
-    // תנועה: אם סיבוב במקום, מנועים בזוויות הפוכות
-    if (rotateInPlace) {
-      motgo(speed, 0);     // ימני
-      motgo(-speed, 1);    // שמאלי הפוך
-    } else {
-      motgo(speed, 0);     // שניהם באותו כיוון
+    speed = constrain(speed, -254, 254);          // מגבילים את המהירות שלא תהיה מוגזמת
+
+    if (rotateInPlace) {                           // אם אנחנו בסיבוב במקום
+      motgo(-speed, 0);                            // מנוע A אחורה
+      motgo(speed, 1);                             // מנוע B קדימה
+    } else {                                       // תנועה ישרה
+      motgo(speed, 0);                             // שני המנועים קדימה
       motgo(speed, 1);
     }
 
-    delay(10);  // המתן לפני ביצוע קריאה מחדש
+    delay(10);                                     // מחכים 10ms לפני שממשיכים כדי לא להציף את הלולאה
+  }
+}
+void ev3lego::motgo(int speed, int motnum) {     // פונקציה שמפעילה מנוע לפי מהירות ומספר מנוע (0, 1 או 2)
+  if (speed == 0) {                               // אם המהירות היא 0 – עוצרים את המנוע
+    switch (motnum) {
+      case 0:                                     // מנוע A
+        digitalWrite(_in10, LOW);                 // מפסיקים זרם קדימה
+        digitalWrite(_in20, LOW);                 // מפסיקים זרם אחורה
+        analogWrite(_enA0, 0);                    // לא שולחים זרם למנוע
+        break;
+      case 1:                                     // מנוע B
+        digitalWrite(_in11, LOW);
+        digitalWrite(_in21, LOW);
+        analogWrite(_enB1, 0);
+        break;
+      case 2:                                     // מנוע C (נוסף)
+        digitalWrite(_in12, LOW);
+        digitalWrite(_in22, LOW);
+        analogWrite(_enC2, 0);
+        break;
+    }
+    return;                                       // יוצאים מהפונקציה (לא מפעילים את שאר הקוד)
   }
 
-  // עצירה מוחלטת של המנועים אחרי הגעה למטרה
-  motgo(0, 0);
-  motgo(0, 1);
-}
-
-
-double ev3lego::gomm(int distance, int times) {
-  return 0;
-}
-
-double ev3lego::gommp(int distance, int times, int kp, int ki, int kd) {
-  return 0;
-}
-
-void ev3lego::blink(int sec){ // מסובב את הכננת קדימה ואחורה לפי מספר שניות
-  motgo(100, 2); //  Winch motor (W)
-  delay(sec);
-  motgo(0, 2); //  Winch motor (W)
-  delay(sec);
-  motgo(-100, 2); //  Winch motor (W)
-  delay(sec);
-}
-
-void ev3lego::stopWinch(){ // stopping winch
-  motgo(0, 2); //  Winch motor (W)
-}
-
-void ev3lego::resetEncoders() {
-  noInterrupts();
-  degreesA = 0;
-  degreesB = 0;
-  interrupts();
-}
-
-void ev3lego::goStraightPID(int degreesTarget, int kp, int ki, int kd) {
-  resetEncoders();
-  cumError = 0;
-  lastError = 0;
-  integralFlag = false;
-  previousTime = millis();
-
-  while (true) {
-    int currentA = degreesA;
-    int currentB = degreesB;
-    int avg = (currentA + currentB) / 2;
-    int error = degreesTarget - avg;
-    if (abs(error) < 3) break;
-
-    int speed = PIDcalc(avg, degreesTarget, kp, ki, kd);
-    speed = constrain(speed, -200, 200);
-    motgo(speed, 0);
-    motgo(speed, 1);
-    delay(10);
+  switch (motnum) {                               // אחרת – מפעילים את המנוע בכיוון ובמהירות הנכונים
+    case 0:
+      digitalWrite(_in10, speed > 0);             // אם המהירות חיובית – קדימה, אחרת – אחורה
+      digitalWrite(_in20, speed <= 0);
+      analogWrite(_enA0, abs(speed));             // שולחים זרם לפי ערך מוחלט של המהירות
+      break;
+    case 1:
+      digitalWrite(_in11, speed <= 0);
+      digitalWrite(_in21, speed > 0);
+      analogWrite(_enB1, abs(speed));
+      break;
+    case 2:
+      digitalWrite(_in12, speed > 0);
+      digitalWrite(_in22, speed <= 0);
+      analogWrite(_enC2, abs(speed));
+      break;
   }
-
-  motgo(0, 0);
-  motgo(0, 1);
-}
-
-void ev3lego::rotate90PID(int degreesTarget, int kp, int ki, int kd) {
-  resetEncoders();
-  cumError = 0;
-  lastError = 0;
-  integralFlag = false;
-  previousTime = millis();
-
-  while (true) {
-    int diff = abs(degreesA - degreesB);
-    int error = degreesTarget - diff;
-
-    Serial.print("Rotate diff: ");
-    Serial.println(diff);
-
-    if (abs(error) < 3) break;
-
-    int speed = PIDcalc(diff, degreesTarget, kp, ki, kd);
-    speed = constrain(speed, -200, 200);
-
-    // נסיעה הפוכה במנוע B
-    motgo(speed, 0);    // מנוע ימני - קדימה
-    motgo(-speed, 1);   // מנוע שמאלי - אחורה
-    delay(10);
-  }
-
-  motgo(0, 0);
-  motgo(0, 1);
-}
-
-
-void ev3lego::goSquare() {
-  int wheelDiameterMM = 65;
-  int baseWidthMM = 226;
-  int sideLengthMM = 300;  // טווח ארוך יותר
-  int kp = 3, ki = 1, kd = 1;
-
-  double wheelCircumference = PI * wheelDiameterMM;
-  int degreesPerSide = (360.0 * sideLengthMM) / wheelCircumference;
-
-  // חישוב דרגת סיבוב של 90°
-  int turnDegrees = (baseWidthMM * PI / 4.0) / wheelCircumference * 360.0;
-
-  Serial.println("Starting square movement...");
-  for (int i = 0; i < 4; i++) {
-    goStraightPID(degreesPerSide, kp, ki, kd);
-    delay(300);
-    rotate90PID(turnDegrees, kp, ki, kd);
-    delay(300);
-  }
-  Serial.println("Finished square.");
 }
